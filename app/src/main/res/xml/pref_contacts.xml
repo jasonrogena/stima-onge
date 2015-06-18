@@ -1,0 +1,9 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <EditTextPreference
+        android:key="contact_number"
+        android:title="@string/pref_title_phone_number"
+        android:summary="@string/pref_description_phone_number"
+        android:defaultValue="@string/pref_default_phone_number" />
+
+</PreferenceScreen>

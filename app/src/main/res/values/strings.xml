@@ -17,4 +17,7 @@
 
 <resources>
     <string name="app_name">Stima Onge</string>
+    <string name="power_lost">It appears like there\'s been a power blackout since %s</string>
+    <string name="power_back">Power came back on %s</string>
+    <string name="battery_level">My current battery level is %s</string>
 </resources>

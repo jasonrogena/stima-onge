@@ -8,4 +8,4 @@ This code is released under the [GNU General Public License version 3](http://ww
 
 ## Download
 
-You can download the signed Android apk from [here](https://github.com/jasonrogena/stima-onge/blob/master/app/build/outputs/apk/app-release.apk). Please note that this project is still under development and should be considered pre-alpha. The application currently only works on devices that run Android 2.3 and newer.
+You can download the unsigned Android apk from [here](https://github.com/jasonrogena/stima-onge/blob/master/app/build/outputs/apk/app-debug.apk). Please note that this project is still under development and should be considered pre-alpha. The application currently only works on devices that run Android 2.3 and newer.

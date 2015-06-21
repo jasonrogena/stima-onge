@@ -18,7 +18,10 @@
 package ke.co.stimaonge;
 
 import android.annotation.TargetApi;
+import android.app.AlarmManager;
+import android.app.PendingIntent;
 import android.content.Context;
+import android.content.Intent;
 import android.content.res.Configuration;
 import android.media.Ringtone;
 import android.media.RingtoneManager;
@@ -34,11 +37,16 @@ import android.preference.PreferenceManager;
 import android.preference.RingtonePreference;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
+import android.util.Log;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.LinearLayout;
+import android.widget.ListView;
 
 
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -53,6 +61,8 @@ import java.util.List;
  * API Guide</a> for more information on developing a Settings UI.
  */
 public class SettingsActivity extends PreferenceActivity {
+    private static final String TAG  = "StimaOnge.SettingsActivty";
+
     /**
      * Determines whether to always show the simplified settings UI, where
      * settings are presented in a single list. When false, settings are shown
@@ -66,9 +76,35 @@ public class SettingsActivity extends PreferenceActivity {
     protected void onPostCreate(Bundle savedInstanceState) {
         super.onPostCreate(savedInstanceState);
         //set up the bar up-top
-        LinearLayout root = (LinearLayout)findViewById(android.R.id.list).getParent().getParent().getParent();
-        Toolbar bar = (Toolbar) LayoutInflater.from(this).inflate(R.layout.settings_toolbar, root, false);
-        root.addView(bar, 0); //insert at top
+        Toolbar bar;
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
+            LinearLayout root = (LinearLayout) findViewById(android.R.id.list).getParent().getParent().getParent();
+            bar = (Toolbar) LayoutInflater.from(this).inflate(R.layout.settings_toolbar, root, false);
+            root.addView(bar, 0); // insert at top
+        } else {
+            ViewGroup root = (ViewGroup) findViewById(android.R.id.content);
+            ListView content = (ListView) root.getChildAt(0);
+
+            root.removeAllViews();
+
+            bar = (Toolbar) LayoutInflater.from(this).inflate(R.layout.settings_toolbar, root, false);
+
+
+            int height;
+            TypedValue tv = new TypedValue();
+            if (getTheme().resolveAttribute(R.attr.actionBarSize, tv, true)) {
+                height = TypedValue.complexToDimensionPixelSize(tv.data, getResources().getDisplayMetrics());
+            }else{
+                height = bar.getHeight();
+            }
+
+            content.setPadding(0, height, 0, 0);
+
+            root.addView(content);
+            root.addView(bar);
+        }
+
         bar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -77,6 +113,7 @@ public class SettingsActivity extends PreferenceActivity {
         });
 
         setupSimplePreferencesScreen();
+        //scheduleServiceStart();
     }
 
     /**
@@ -114,10 +151,9 @@ public class SettingsActivity extends PreferenceActivity {
         // Bind the summaries of EditText/List/Dialog/Ringtone preferences to
         // their values. When their values change, their summaries are updated
         // to reflect the new value, per the Android Design guidelines.
-        bindPreferenceSummaryToValue(findPreference("contact_number"));
-        bindPreferenceSummaryToValue(findPreference("check_frequency"));
+        bindPreferenceSummaryToValue(findPreference(ke.co.stimaonge.storage.Preference.PREF_CONTACT_NUMBER));
         //bindPreferenceSummaryToValue(findPreference("allow_ping"));
-        bindPreferenceSummaryToValue(findPreference("ping_keyword"));
+        bindPreferenceSummaryToValue(findPreference(ke.co.stimaonge.storage.Preference.PREF_PING_KEYWORD));
         //bindPreferenceSummaryToValue(findPreference("persistent_notification"));
     }
 
@@ -187,9 +223,9 @@ public class SettingsActivity extends PreferenceActivity {
                 // For all other preferences, set the summary to the value's
                 // simple string representation.
                 if(stringValue.length() == 0){
-                   if(preference.getKey().equals("contact_number")) {
+                   if(preference.getKey().equals(ke.co.stimaonge.storage.Preference.PREF_CONTACT_NUMBER)) {
                        preference.setSummary(R.string.pref_description_phone_number);
-                   }else if(preference.getKey().equals("ping_keyword")) {
+                   }else if(preference.getKey().equals(ke.co.stimaonge.storage.Preference.PREF_PING_KEYWORD)) {
                        preference.setSummary(R.string.pref_description_ping_keyword);
                    }
                 }
@@ -237,7 +273,7 @@ public class SettingsActivity extends PreferenceActivity {
             // to their values. When their values change, their summaries are
             // updated to reflect the new value, per the Android Design
             // guidelines.
-            bindPreferenceSummaryToValue(findPreference("contact_number"));
+            bindPreferenceSummaryToValue(findPreference(ke.co.stimaonge.storage.Preference.PREF_CONTACT_NUMBER));
         }
     }
 
@@ -256,9 +292,8 @@ public class SettingsActivity extends PreferenceActivity {
             // to their values. When their values change, their summaries are
             // updated to reflect the new value, per the Android Design
             // guidelines.
-            bindPreferenceSummaryToValue(findPreference("check_frequency"));
             //bindPreferenceSummaryToValue(findPreference("allow_ping"));
-            bindPreferenceSummaryToValue(findPreference("ping_keyword"));
+            bindPreferenceSummaryToValue(findPreference(ke.co.stimaonge.storage.Preference.PREF_PING_KEYWORD));
         }
     }
 
@@ -279,5 +314,16 @@ public class SettingsActivity extends PreferenceActivity {
             // guidelines.
             //bindPreferenceSummaryToValue(findPreference("persistent_notification"));
         }
+    }
+
+    /**
+     * This method schedules the persistent service to start every now and then
+     */
+    private void scheduleServiceStart(){
+        Intent intent = new Intent(SettingsActivity.this, PersistentService.class);
+        PendingIntent pendingIntent = PendingIntent.getService(SettingsActivity.this, 0, intent, PendingIntent.FLAG_CANCEL_CURRENT);
+        AlarmManager alarmManager = (AlarmManager)getSystemService(Context.ALARM_SERVICE);
+        alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, new Date().getTime(), PersistentService.RESTART_INTERVAL, pendingIntent);
+        Log.i(TAG, "Persistent service now scheduled to start every now and then");
     }
 }

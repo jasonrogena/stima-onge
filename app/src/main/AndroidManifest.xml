@@ -18,7 +18,8 @@
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="ke.co.stimaonge" >
-
+    <uses-permission android:name="android.permission.SEND_SMS" />
+    <uses-permission android:name="android.permission.RECEIVE_SMS" />
     <application
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
@@ -32,6 +33,22 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <service
+            android:name=".PersistentService"
+            android:enabled="true">
+        </service>
+        <receiver android:name="ke.co.stimaonge.monitors.Power">
+            <intent-filter>
+                <action android:name="android.intent.action.ACTION_POWER_CONNECTED"/>
+                <action android:name="android.intent.action.ACTION_POWER_DISCONNECTED"/>
+            </intent-filter>
+        </receiver>
+        <receiver android:name="ke.co.stimaonge.monitors.SMS"
+            android:exported="true"
+            android:permission="android.permission.BROADCAST_SMS">
+            <intent-filter>
+                <action android:name="android.provider.Telephony.SMS_RECEIVED"/>
+            </intent-filter>
+        </receiver>
     </application>
-
 </manifest>
